@@ -64,9 +64,6 @@ public class GameActivity extends AppCompatActivity {
     private ListenerRegistration duelListener;
     private boolean hasSubmittedResult = false;
     private String myFinalVerdict = null;
-    // Add this field to store gameStartTime
-    private long gameStartTime = -1;
-    private long lastKnownGameStartTime = -1; // Track last known value to avoid duplicate timer starts
     private String targetWord = null;
 
     private AlertDialog waitingDialog;
@@ -88,8 +85,7 @@ public class GameActivity extends AppCompatActivity {
             opponentUid = intent.getStringExtra("opponentUid");
             duelId = intent.getStringExtra("duelId");
             db = FirebaseFirestore.getInstance();
-            // Get gameStartTime from intent
-            gameStartTime = intent.getLongExtra("gameStartTime", -1);
+            db.collection("users").document(myUid).update("inGame", true);
             // Always use hard mode and WordleStandard.txt for multiplayer
             includeAllWords = false;
             hardMode = true;
@@ -357,9 +353,18 @@ public class GameActivity extends AppCompatActivity {
             // App is being killed (e.g., swiped from recents), force forfeit
             endGameWithVerdict("forfeit");
         }
-        if (isMultiplayer && duelListener != null) duelListener.remove();
-        if (isMultiplayer && gameCountDownTimer != null) {
-            gameCountDownTimer.cancel();
+        if (isMultiplayer) {
+            // Set the user's status back to not being in a game.
+            // This is crucial for the matchmaking logic to work correctly.
+            db.collection("users").document(myUid).update("inGame", false);
+
+            // Cleanup duel listener and countdown timer
+            if (duelListener != null) {
+                duelListener.remove();
+            }
+            if (gameCountDownTimer != null) {
+                gameCountDownTimer.cancel();
+            }
         }
         super.onDestroy();
     }

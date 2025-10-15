@@ -95,6 +95,7 @@ public class MultiplayerActivity extends AppCompatActivity {
         userData.put("uid", uid);
         userData.put("opponent_uid", "");
         userData.put("ready", false);
+        userData.put("inGame", false);
         db.collection("users").document(uid).set(userData, SetOptions.merge());
 
         // Enable Play button only if entered UID is 6 chars and not same as own UID
@@ -273,6 +274,8 @@ public class MultiplayerActivity extends AppCompatActivity {
         }
     }
 
+    // In MultiplayerActivity.java
+
     private void checkMatchmakingCondition(@Nullable DocumentSnapshot mySnap, @Nullable DocumentSnapshot oppSnap) {
         // Always fetch both snapshots if either is missing
         if (mySnap == null || oppSnap == null) {
@@ -287,8 +290,19 @@ public class MultiplayerActivity extends AppCompatActivity {
         Boolean oppReady = oppSnap.getBoolean("ready");
         String myOppUid = mySnap.getString("opponent_uid");
         String oppOppUid = oppSnap.getString("opponent_uid");
-        if (Boolean.TRUE.equals(myReady) && Boolean.TRUE.equals(oppReady)
-                && myUid.equals(oppOppUid) && opponentUid.equals(myOppUid)) {
+
+        // --- START of new code to add ---
+        // Safely get the inGame status. Default to 'false' if the field doesn't exist.
+        boolean myInGame = mySnap.getBoolean("inGame") != null && mySnap.getBoolean("inGame");
+        boolean oppInGame = oppSnap.getBoolean("inGame") != null && oppSnap.getBoolean("inGame");
+        // --- END of new code to add ---
+
+        // Condition 1: Both players are ready and mutually matched.
+        boolean bothReadyAndMatched = Boolean.TRUE.equals(myReady) && Boolean.TRUE.equals(oppReady)
+                && myUid.equals(oppOppUid) && opponentUid.equals(myOppUid);
+
+        // The final condition now includes checking if NEITHER player is in a game.
+        if (bothReadyAndMatched && !myInGame && !oppInGame) {
             if (!isMatchmaking) {
                 isMatchmaking = true;
                 // Only one user should set the start_time to avoid race conditions
@@ -340,6 +354,7 @@ public class MultiplayerActivity extends AppCompatActivity {
             }
         }
     }
+
 
     private String getDuelId() {
         // Generate a unique duelId by sorting both UIDs alphabetically and joining with an underscore
