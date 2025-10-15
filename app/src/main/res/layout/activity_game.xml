@@ -1,0 +1,254 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/game_activity_main_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="8dp"
+    tools:context=".GameActivity">
+
+    <!-- Top bar: All buttons for both modes -->
+    <ImageButton
+        android:id="@+id/buttonStatistics"
+        android:layout_width="60dp"
+        android:layout_height="48dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="View Statistics"
+        android:src="@drawable/ic_statistics"
+        android:layout_margin="20dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageButton
+        android:id="@+id/buttonOptions"
+        android:layout_width="60dp"
+        android:layout_height="48dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Game Options"
+        android:src="@drawable/ic_menu_options"
+        android:layout_margin="20dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageButton
+        android:id="@+id/buttonForfeit"
+        android:layout_width="60dp"
+        android:layout_height="48dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Forfeit Game"
+        android:src="@drawable/ic_forfeit"
+        android:layout_margin="20dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/textViewCountdown"
+        android:layout_width="60dp"
+        android:layout_height="48dp"
+        android:gravity="center"
+        android:text="05:00"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:layout_margin="20dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:visibility="gone" />
+
+    <!-- Title: Game name with shadow -->
+    <FrameLayout
+        android:id="@+id/textViewGameTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_margin="20dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <!-- Pink shadow -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="WORDLE"
+            android:textSize="36sp"
+            android:textStyle="bold"
+            android:textColor="#000000"
+            android:shadowColor="#FF0050"
+            android:shadowDx="4"
+            android:shadowDy="4"
+            android:shadowRadius="6"
+            android:gravity="center" />
+
+        <!-- Blue shadow -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="WORDLE"
+            android:textSize="36sp"
+            android:textStyle="bold"
+            android:textColor="#000000"
+            android:shadowColor="#00F2EA"
+            android:shadowDx="-4"
+            android:shadowDy="-4"
+            android:shadowRadius="6"
+            android:gravity="center" />
+
+    </FrameLayout>
+    <!-- Main content: grid + keyboard split 65/35 -->
+    <LinearLayout
+        android:id="@+id/mainContentLayout"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:orientation="vertical"
+        app:layout_constraintTop_toBottomOf="@id/textViewGameTitle"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_marginTop="24dp">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/gridContainer"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="0.65">
+
+        <!-- Grid area (65%) -->
+            <androidx.gridlayout.widget.GridLayout
+                android:id="@+id/gridLayoutWordle"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_marginLeft="30dp"
+                android:layout_marginRight="30dp"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintDimensionRatio="5:6"
+                app:columnCount="5"
+                app:rowCount="6">
+
+
+                <!-- 6 rows x 5 columns -->
+                <TextView style="@style/WordleGridCell" android:id="@+id/cell_0_0" android:layout_width="0dp" android:layout_height="0dp" app:layout_rowWeight="1" app:layout_columnWeight="1" android:gravity="center" android:textSize="24sp" android:text="" app:layout_columnSpan="1" app:layout_rowSpan="1" android:layout_margin="3dp"/>
+                <TextView style="@style/WordleGridCell" android:id="@+id/cell_0_1" android:layout_width="0dp" android:layout_height="0dp" app:layout_rowWeight="1" app:layout_columnWeight="1" android:gravity="center" android:textSize="24sp" android:text="" app:layout_columnSpan="1" app:layout_rowSpan="1" android:layout_margin="3dp"/>
+                <TextView style="@style/WordleGridCell" android:id="@+id/cell_0_2" android:layout_width="0dp" android:layout_height="0dp" app:layout_rowWeight="1" app:layout_columnWeight="1" android:gravity="center" android:textSize="24sp" android:text="" app:layout_columnSpan="1" app:layout_rowSpan="1" android:layout_margin="3dp"/>
+                <TextView style="@style/WordleGridCell" android:id="@+id/cell_0_3" android:layout_width="0dp" android:layout_height="0dp" app:layout_rowWeight="1" app:layout_columnWeight="1" android:gravity="center" android:textSize="24sp" android:text="" app:layout_columnSpan="1" app:layout_rowSpan="1" android:layout_margin="3dp"/>
+                <TextView style="@style/WordleGridCell" android:id="@+id/cell_0_4" android:layout_width="0dp" android:layout_height="0dp" app:layout_rowWeight="1" app:layout_columnWeight="1" android:gravity="center" android:textSize="24sp" android:text="" app:layout_columnSpan="1" app:layout_rowSpan="1" android:layout_margin="3dp"/>
+
+                <TextView style="@style/WordleGridCell" android:id="@+id/cell_1_0" android:layout_width="0dp" android:layout_height="0dp" app:layout_rowWeight="1" app:layout_columnWeight="1" android:gravity="center" android:textSize="24sp" android:text="" app:layout_columnSpan="1" app:layout_rowSpan="1" android:layout_margin="3dp"/>
+                <TextView style="@style/WordleGridCell" android:id="@+id/cell_1_1" android:layout_width="0dp" android:layout_height="0dp" app:layout_rowWeight="1" app:layout_columnWeight="1" android:gravity="center" android:textSize="24sp" android:text="" app:layout_columnSpan="1" app:layout_rowSpan="1" android:layout_margin="3dp"/>
+                <TextView style="@style/WordleGridCell" android:id="@+id/cell_1_2" android:layout_width="0dp" android:layout_height="0dp" app:layout_rowWeight="1" app:layout_columnWeight="1" android:gravity="center" android:textSize="24sp" android:text="" app:layout_columnSpan="1" app:layout_rowSpan="1" android:layout_margin="3dp"/>
+                <TextView style="@style/WordleGridCell" android:id="@+id/cell_1_3" android:layout_width="0dp" android:layout_height="0dp" app:layout_rowWeight="1" app:layout_columnWeight="1" android:gravity="center" android:textSize="24sp" android:text="" app:layout_columnSpan="1" app:layout_rowSpan="1" android:layout_margin="3dp"/>
+                <TextView style="@style/WordleGridCell" android:id="@+id/cell_1_4" android:layout_width="0dp" android:layout_height="0dp" app:layout_rowWeight="1" app:layout_columnWeight="1" android:gravity="center" android:textSize="24sp" android:text="" app:layout_columnSpan="1" app:layout_rowSpan="1" android:layout_margin="3dp"/>
+
+                <TextView style="@style/WordleGridCell" android:id="@+id/cell_2_0" android:layout_width="0dp" android:layout_height="0dp" app:layout_rowWeight="1" app:layout_columnWeight="1" android:gravity="center" android:textSize="24sp" android:text="" app:layout_columnSpan="1" app:layout_rowSpan="1" android:layout_margin="3dp"/>
+                <TextView style="@style/WordleGridCell" android:id="@+id/cell_2_1" android:layout_width="0dp" android:layout_height="0dp" app:layout_rowWeight="1" app:layout_columnWeight="1" android:gravity="center" android:textSize="24sp" android:text="" app:layout_columnSpan="1" app:layout_rowSpan="1" android:layout_margin="3dp"/>
+                <TextView style="@style/WordleGridCell" android:id="@+id/cell_2_2" android:layout_width="0dp" android:layout_height="0dp" app:layout_rowWeight="1" app:layout_columnWeight="1" android:gravity="center" android:textSize="24sp" android:text="" app:layout_columnSpan="1" app:layout_rowSpan="1" android:layout_margin="3dp"/>
+                <TextView style="@style/WordleGridCell" android:id="@+id/cell_2_3" android:layout_width="0dp" android:layout_height="0dp" app:layout_rowWeight="1" app:layout_columnWeight="1" android:gravity="center" android:textSize="24sp" android:text="" app:layout_columnSpan="1" app:layout_rowSpan="1" android:layout_margin="3dp"/>
+                <TextView style="@style/WordleGridCell" android:id="@+id/cell_2_4" android:layout_width="0dp" android:layout_height="0dp" app:layout_rowWeight="1" app:layout_columnWeight="1" android:gravity="center" android:textSize="24sp" android:text="" app:layout_columnSpan="1" app:layout_rowSpan="1" android:layout_margin="3dp"/>
+
+                <TextView style="@style/WordleGridCell" android:id="@+id/cell_3_0" android:layout_width="0dp" android:layout_height="0dp" app:layout_rowWeight="1" app:layout_columnWeight="1" android:gravity="center" android:textSize="24sp" android:text="" app:layout_columnSpan="1" app:layout_rowSpan="1" android:layout_margin="3dp"/>
+                <TextView style="@style/WordleGridCell" android:id="@+id/cell_3_1" android:layout_width="0dp" android:layout_height="0dp" app:layout_rowWeight="1" app:layout_columnWeight="1" android:gravity="center" android:textSize="24sp" android:text="" app:layout_columnSpan="1" app:layout_rowSpan="1" android:layout_margin="3dp"/>
+                <TextView style="@style/WordleGridCell" android:id="@+id/cell_3_2" android:layout_width="0dp" android:layout_height="0dp" app:layout_rowWeight="1" app:layout_columnWeight="1" android:gravity="center" android:textSize="24sp" android:text="" app:layout_columnSpan="1" app:layout_rowSpan="1" android:layout_margin="3dp"/>
+                <TextView style="@style/WordleGridCell" android:id="@+id/cell_3_3" android:layout_width="0dp" android:layout_height="0dp" app:layout_rowWeight="1" app:layout_columnWeight="1" android:gravity="center" android:textSize="24sp" android:text="" app:layout_columnSpan="1" app:layout_rowSpan="1" android:layout_margin="3dp"/>
+                <TextView style="@style/WordleGridCell" android:id="@+id/cell_3_4" android:layout_width="0dp" android:layout_height="0dp" app:layout_rowWeight="1" app:layout_columnWeight="1" android:gravity="center" android:textSize="24sp" android:text="" app:layout_columnSpan="1" app:layout_rowSpan="1" android:layout_margin="3dp"/>
+
+                <TextView style="@style/WordleGridCell" android:id="@+id/cell_4_0" android:layout_width="0dp" android:layout_height="0dp" app:layout_rowWeight="1" app:layout_columnWeight="1" android:gravity="center" android:textSize="24sp" android:text="" app:layout_columnSpan="1" app:layout_rowSpan="1" android:layout_margin="3dp"/>
+                <TextView style="@style/WordleGridCell" android:id="@+id/cell_4_1" android:layout_width="0dp" android:layout_height="0dp" app:layout_rowWeight="1" app:layout_columnWeight="1" android:gravity="center" android:textSize="24sp" android:text="" app:layout_columnSpan="1" app:layout_rowSpan="1" android:layout_margin="3dp"/>
+                <TextView style="@style/WordleGridCell" android:id="@+id/cell_4_2" android:layout_width="0dp" android:layout_height="0dp" app:layout_rowWeight="1" app:layout_columnWeight="1" android:gravity="center" android:textSize="24sp" android:text="" app:layout_columnSpan="1" app:layout_rowSpan="1" android:layout_margin="3dp"/>
+                <TextView style="@style/WordleGridCell" android:id="@+id/cell_4_3" android:layout_width="0dp" android:layout_height="0dp" app:layout_rowWeight="1" app:layout_columnWeight="1" android:gravity="center" android:textSize="24sp" android:text="" app:layout_columnSpan="1" app:layout_rowSpan="1" android:layout_margin="3dp"/>
+                <TextView style="@style/WordleGridCell" android:id="@+id/cell_4_4" android:layout_width="0dp" android:layout_height="0dp" app:layout_rowWeight="1" app:layout_columnWeight="1" android:gravity="center" android:textSize="24sp" android:text="" app:layout_columnSpan="1" app:layout_rowSpan="1" android:layout_margin="3dp"/>
+
+                <TextView style="@style/WordleGridCell" android:id="@+id/cell_5_0" android:layout_width="0dp" android:layout_height="0dp" app:layout_rowWeight="1" app:layout_columnWeight="1" android:gravity="center" android:textSize="24sp" android:text="" app:layout_columnSpan="1" app:layout_rowSpan="1" android:layout_margin="3dp"/>
+                <TextView style="@style/WordleGridCell" android:id="@+id/cell_5_1" android:layout_width="0dp" android:layout_height="0dp" app:layout_rowWeight="1" app:layout_columnWeight="1" android:gravity="center" android:textSize="24sp" android:text="" app:layout_columnSpan="1" app:layout_rowSpan="1" android:layout_margin="3dp"/>
+                <TextView style="@style/WordleGridCell" android:id="@+id/cell_5_2" android:layout_width="0dp" android:layout_height="0dp" app:layout_rowWeight="1" app:layout_columnWeight="1" android:gravity="center" android:textSize="24sp" android:text="" app:layout_columnSpan="1" app:layout_rowSpan="1" android:layout_margin="3dp"/>
+                <TextView style="@style/WordleGridCell" android:id="@+id/cell_5_3" android:layout_width="0dp" android:layout_height="0dp" app:layout_rowWeight="1" app:layout_columnWeight="1" android:gravity="center" android:textSize="24sp" android:text="" app:layout_columnSpan="1" app:layout_rowSpan="1" android:layout_margin="3dp"/>
+                <TextView style="@style/WordleGridCell" android:id="@+id/cell_5_4" android:layout_width="0dp" android:layout_height="0dp" app:layout_rowWeight="1" app:layout_columnWeight="1" android:gravity="center" android:textSize="24sp" android:text="" app:layout_columnSpan="1" app:layout_rowSpan="1" android:layout_margin="3dp"/>
+
+            </androidx.gridlayout.widget.GridLayout>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <!-- Keyboard area (35%) -->
+        <LinearLayout
+            android:id="@+id/keyboardLayout"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="0.35"
+            android:orientation="vertical"
+            android:gravity="fill"
+            android:paddingTop="30dp"
+            android:paddingBottom="30dp"
+            android:weightSum="3"
+            android:layout_marginHorizontal="5dp">
+
+
+            <!-- Row 1: QWERTYUIOP -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:orientation="horizontal"
+                android:weightSum="10"
+                android:gravity="fill"
+                android:layout_marginVertical="3dp">
+
+                <Button style="@style/WordleButtonStyle" android:id="@+id/key_q" android:text="Q"/>
+                <Button style="@style/WordleButtonStyle" android:id="@+id/key_w" android:text="W"/>
+                <Button style="@style/WordleButtonStyle" android:id="@+id/key_e" android:text="E"/>
+                <Button style="@style/WordleButtonStyle" android:id="@+id/key_r" android:text="R"/>
+                <Button style="@style/WordleButtonStyle" android:id="@+id/key_t" android:text="T"/>
+                <Button style="@style/WordleButtonStyle" android:id="@+id/key_y" android:text="Y"/>
+                <Button style="@style/WordleButtonStyle" android:id="@+id/key_u" android:text="U"/>
+                <Button style="@style/WordleButtonStyle" android:id="@+id/key_i" android:text="I"/>
+                <Button style="@style/WordleButtonStyle" android:id="@+id/key_o" android:text="O"/>
+                <Button style="@style/WordleButtonStyle" android:id="@+id/key_p" android:text="P"/>
+
+            </LinearLayout>
+
+            <!-- Row 2: ASDFGHJKL -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:orientation="horizontal"
+                android:weightSum="10"
+                android:gravity="center_horizontal"
+                android:layout_marginVertical="3dp">
+
+                <Button style="@style/WordleButtonStyle" android:id="@+id/key_a" android:text="A"/>
+                <Button style="@style/WordleButtonStyle" android:id="@+id/key_s" android:text="S"/>
+                <Button style="@style/WordleButtonStyle" android:id="@+id/key_d" android:text="D"/>
+                <Button style="@style/WordleButtonStyle" android:id="@+id/key_f" android:text="F"/>
+                <Button style="@style/WordleButtonStyle" android:id="@+id/key_g" android:text="G"/>
+                <Button style="@style/WordleButtonStyle" android:id="@+id/key_h" android:text="H"/>
+                <Button style="@style/WordleButtonStyle" android:id="@+id/key_j" android:text="J"/>
+                <Button style="@style/WordleButtonStyle" android:id="@+id/key_k" android:text="K"/>
+                <Button style="@style/WordleButtonStyle" android:id="@+id/key_l" android:text="L"/>
+
+            </LinearLayout>
+
+            <!-- Row 3: Enter, ZXCVBNM, Backspace -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:orientation="horizontal"
+                android:layout_marginVertical="3dp">
+
+                <Button style="@style/WordleButtonStyle" android:id="@+id/key_enter" android:text="ENTER" android:layout_weight="1.5"/>
+                <Button style="@style/WordleButtonStyle" android:id="@+id/key_z" android:text="Z"/>
+                <Button style="@style/WordleButtonStyle" android:id="@+id/key_x" android:text="X"/>
+                <Button style="@style/WordleButtonStyle" android:id="@+id/key_c" android:text="C"/>
+                <Button style="@style/WordleButtonStyle" android:id="@+id/key_v" android:text="V"/>
+                <Button style="@style/WordleButtonStyle" android:id="@+id/key_b" android:text="B"/>
+                <Button style="@style/WordleButtonStyle" android:id="@+id/key_n" android:text="N"/>
+                <Button style="@style/WordleButtonStyle" android:id="@+id/key_m" android:text="M"/>
+                <Button style="@style/WordleButtonStyle" android:id="@+id/key_backspace" android:text="⌫" android:layout_weight="1.5" android:textSize="20dp"/>
+
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

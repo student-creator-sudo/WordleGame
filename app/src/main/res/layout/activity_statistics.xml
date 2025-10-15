@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".StatisticsActivity">
+
+    <TextView
+        android:id="@+id/textViewTotalGames"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Total Games: 0"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="50dp"/>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/constraintStats"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/textViewTotalGames"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="26dp">
+
+        <LinearLayout
+            android:id="@+id/linearWins"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/linearLosses"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintHorizontal_weight="1"
+            android:gravity="center_horizontal"
+            android:layout_marginEnd="8dp">
+            <TextView
+                android:id="@+id/textViewWins"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Wins: 0"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="#388E3C"
+                android:padding="8dp"/>
+            <TextView
+                android:id="@+id/textViewWinRate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0% win rate"
+                android:textSize="14sp"
+                android:textColor="#388E3C"
+                android:padding="8dp"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/linearLosses"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintStart_toEndOf="@id/linearWins"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintHorizontal_weight="1"
+            android:gravity="center_horizontal"
+            android:layout_marginStart="8dp">
+            <TextView
+                android:id="@+id/textViewLosses"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Losses: 0"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="#D32F2F"
+                android:padding="8dp"/>
+            <TextView
+                android:id="@+id/textViewLossRate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0% loss rate"
+                android:textSize="14sp"
+                android:textColor="#D32F2F"
+                android:padding="8dp"/>
+        </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <com.example.wordle.BarChartView
+        android:id="@+id/barChartView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginBottom="24dp"
+        android:layout_marginTop="50dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/constraintStats"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <TextView
+        android:id="@+id/textViewStatistics"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textSize="24sp"
+        app:layout_constraintBottom_toTopOf="@id/barChartView"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <ImageButton
+        android:id="@+id/buttonGoBack"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Go Back"
+        android:src="@drawable/ic_arrow_back"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"/>
+
+    <ImageButton
+        android:id="@+id/buttonResetStats"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Reset Stats"
+        android:src="@drawable/ic_reset_stats"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginTop="8dp"
+        android:layout_marginStart="8dp"/>
+</androidx.constraintlayout.widget.ConstraintLayout>

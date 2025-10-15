@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="24dp"
+    tools:context=".MultiplayerActivity">
+
+    <TextView
+        android:id="@+id/textViewTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Multiplayer Duel"
+        android:textSize="32sp"
+        android:textStyle="bold"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="32dp"/>
+
+    <TextView
+        android:id="@+id/textViewMyUidLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Your UID:"
+        android:textSize="18sp"
+        app:layout_constraintTop_toBottomOf="@id/textViewTitle"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginTop="32dp"/>
+
+    <TextView
+        android:id="@+id/textViewMyUid"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="ABC123"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        app:layout_constraintTop_toBottomOf="@id/textViewTitle"
+        app:layout_constraintStart_toEndOf="@id/textViewMyUidLabel"
+        android:layout_marginTop="32dp"
+        android:layout_marginStart="8dp"/>
+
+    <EditText
+        android:id="@+id/editTextOpponentUid"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:hint="Enter opponent's UID"
+        android:maxLength="6"
+        android:inputType="text"
+        android:textSize="18sp"
+        app:layout_constraintTop_toBottomOf="@id/textViewMyUidLabel"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="32dp"/>
+
+    <Button
+        android:id="@+id/buttonPlayMultiplayer"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="Play"
+        android:textSize="18sp"
+        android:enabled="false"
+        app:layout_constraintTop_toBottomOf="@id/editTextOpponentUid"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="32dp"/>
+
+    <ImageButton
+        android:id="@+id/buttonGoHome"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Go Home"
+        android:src="@drawable/ic_home"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginBottom="16dp"
+        android:layout_marginEnd="16dp"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

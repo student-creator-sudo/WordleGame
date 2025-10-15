@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">Wordle</string>
+    <string name="your_id">Your ID: %1$s</string>
+    <string name="play_button_placeholder">Play button pressed! (Multiplayer logic not implemented yet)</string>
+    <string name="invalid_opponent_id">Please enter a valid 8-character opponent ID.</string>
+    <string name="firestore_error">A Firestore error occurred. Please try again.</string>
+    <string name="play">Play</string>
+    <string name="cancel">Cancel</string>
+    <string name="starting_in">Starting in %1$d</string>
+    <string name="starting">Starting...</string>
+    <string name="opponent_uid_length_error">Opponent UID must be 6 characters.</string>
+    <string name="opponent_uid_not_found_error">Opponent UID not found.</string>
+</resources>
