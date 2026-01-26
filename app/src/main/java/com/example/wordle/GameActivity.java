@@ -34,6 +34,7 @@ import com.google.firebase.firestore.ListenerRegistration;
 import android.os.CountDownTimer;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import java.util.Locale;
+import android.util.Log;
 
 public class GameActivity extends AppCompatActivity {
 
@@ -71,6 +72,8 @@ public class GameActivity extends AppCompatActivity {
     // Add a boolean flag to prevent multiple countdowns
     private boolean CDHasStarted = false;
 
+    private static final String TAG = "GameActivity";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -80,17 +83,18 @@ public class GameActivity extends AppCompatActivity {
         // Check if multiplayer mode is activated via Intent extra
         Intent intent = getIntent();
         isMultiplayer = intent.getBooleanExtra("isMultiplayer", false);
+        Log.d(TAG, "onCreate: isMultiplayer=" + isMultiplayer);
         if (isMultiplayer) {
             myUid = intent.getStringExtra("myUid");
             opponentUid = intent.getStringExtra("opponentUid");
             duelId = intent.getStringExtra("duelId");
+            Log.d(TAG, "onCreate: myUid=" + myUid + " opponentUid=" + opponentUid + " duelId=" + duelId);
             db = FirebaseFirestore.getInstance();
             db.collection("users").document(myUid).update("inGame", true);
+            Log.d(TAG, "onCreate: set inGame=true for " + myUid);
             // Always use hard mode and WordleStandard.txt for multiplayer
             includeAllWords = false;
             hardMode = true;
-            // DO NOT reset duel document here; only reset when starting a new duel, not when entering the game
-            // resetDuelDocument(); // <-- REMOVE THIS LINE
         } else {
             // Load preferences from SharedPreferences for single-player mode
             SharedPreferences prefs = getSharedPreferences("WordlePrefs", MODE_PRIVATE);
@@ -103,8 +107,8 @@ public class GameActivity extends AppCompatActivity {
 
         // Start a new game with the correct word list
         if (isMultiplayer) {
+            Log.d(TAG, "onCreate: fetching/setting target word for duel " + duelId);
             fetchOrSetTargetWord();
-            // Removed code that resets 'ready' status for both players after 5 seconds
         } else {
             startNewGame();
         }
@@ -291,8 +295,8 @@ public class GameActivity extends AppCompatActivity {
             gameCountDownTimer.cancel();
         }
         if (isMultiplayer) {
-            // Always start a 5-minute timer from now, ignore gameStartTime
             long timerDuration = GAME_DURATION_MS;
+            Log.d(TAG, "startGameCountdown: starting multiplayer timer durationMs=" + timerDuration);
             if (countdownTextView != null) countdownTextView.setVisibility(View.VISIBLE);
             int minutes = (int) (timerDuration / 60000);
             int seconds = (int) ((timerDuration / 1000) % 60);
@@ -307,11 +311,11 @@ public class GameActivity extends AppCompatActivity {
                 }
                 public void onFinish() {
                     countdownTextView.setText("00:00");
+                    Log.d(TAG, "startGameCountdown: timer finished -> timeout verdict");
                     endGameWithVerdict("timeout");
                 }
             }.start();
         } else {
-            // Single-player: hide countdown and do not start timer
             if (countdownTextView != null) countdownTextView.setVisibility(View.GONE);
             gameCountDownTimer = null;
         }
@@ -337,6 +341,7 @@ public class GameActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
         if (isMultiplayer) {
+            Log.d(TAG, "onStart: setting up duel listener for " + duelId);
             setupDuelListener();
         }
     }
@@ -350,15 +355,12 @@ public class GameActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         if (isMultiplayer && !isFinishing() && !hasSubmittedResult) {
-            // App is being killed (e.g., swiped from recents), force forfeit
+            Log.d(TAG, "onDestroy: app killed without verdict -> auto forfeit");
             endGameWithVerdict("forfeit");
         }
         if (isMultiplayer) {
-            // Set the user's status back to not being in a game.
-            // This is crucial for the matchmaking logic to work correctly.
+            Log.d(TAG, "onDestroy: clearing inGame=false and cleaning up listeners/timers for " + myUid);
             db.collection("users").document(myUid).update("inGame", false);
-
-            // Cleanup duel listener and countdown timer
             if (duelListener != null) {
                 duelListener.remove();
             }
@@ -371,60 +373,42 @@ public class GameActivity extends AppCompatActivity {
 
     // Multiplayer: End game with a verdict and update Firestore
     private void endGameWithVerdict(String verdict) {
-        // SPECIAL CASE: Forfeit should always be processed to end the game immediately.
+        Log.d(TAG, "endGameWithVerdict: verdict=" + verdict + " hasSubmittedResult=" + hasSubmittedResult);
         if ("forfeit".equals(verdict)) {
-            // Mark that we have submitted a result
             hasSubmittedResult = true;
-            myFinalVerdict = verdict; // Update local verdict state
-
-            // Cancel the timer if it's running
+            myFinalVerdict = verdict;
             if (gameCountDownTimer != null) {
                 gameCountDownTimer.cancel();
             }
-
-            // A forfeit means the opponent wins. We create a map to update both players at once.
             Map<String, Object> myResult = new HashMap<>();
             myResult.put("verdict", "forfeit");
-
             Map<String, Object> oppResult = new HashMap<>();
-            oppResult.put("verdict", "win"); // Opponent wins by default
-
+            oppResult.put("verdict", "win");
             Map<String, Object> update = new HashMap<>();
             update.put(myUid, myResult);
             update.put(opponentUid, oppResult);
-
-            // Use set with merge to update both player objects in one atomic operation.
-            // This will trigger the final dialog for both players.
-            db.collection("duels").document(duelId).set(
-                    update,
-                    com.google.firebase.firestore.SetOptions.merge()
-            );
-            return; // Exit after handling the forfeit.
+            db.collection("duels").document(duelId).set(update, com.google.firebase.firestore.SetOptions.merge());
+            Log.d(TAG, "endGameWithVerdict: wrote forfeit result for duel=" + duelId);
+            return;
         }
-
-        // --- ORIGINAL LOGIC FOR WIN/LOSE/TIMEOUT ---
-        // If we already submitted a result and it's not a forfeit, do nothing.
         if (hasSubmittedResult) {
             return;
         }
         hasSubmittedResult = true;
         myFinalVerdict = verdict;
-
         if (gameCountDownTimer != null) {
             gameCountDownTimer.cancel();
         }
-
         if (isMultiplayer) {
             showWaitingForOpponentDialog();
         }
-
-        // This logic now only runs for non-forfeit verdicts.
         Map<String, Object> myResult = new HashMap<>();
         myResult.put("verdict", verdict);
         db.collection("duels").document(duelId).set(
                 Collections.singletonMap(myUid, myResult),
                 com.google.firebase.firestore.SetOptions.merge()
         );
+        Log.d(TAG, "endGameWithVerdict: wrote my verdict=" + verdict + " for duel=" + duelId);
     }
 
 
@@ -461,6 +445,7 @@ public class GameActivity extends AppCompatActivity {
             if (isMultiplayer && gameCountDownTimer != null) {
                 gameCountDownTimer.cancel();
             }
+            Log.d(TAG, "showDuelVerdictDialog: showing final verdict and finishing duel " + duelId);
             new AlertDialog.Builder(this)
                     .setTitle("Game Over")
                     .setMessage(verdictMessage)
@@ -484,6 +469,7 @@ public class GameActivity extends AppCompatActivity {
             if (tw == null) {
                 // Determine host by player1 field in duel document
                 String player1Uid = snapshot.getString("player1");
+                Log.d(TAG, "fetchOrSetTargetWord: host player1=" + player1Uid + " myUid=" + myUid);
                 if (player1Uid != null && player1Uid.equals(myUid)) {
                     // This client is the host, set the target word
                     List<String> wordList = standardWordList;
@@ -495,11 +481,17 @@ public class GameActivity extends AppCompatActivity {
                     String finalTargetWord = tw;
                     db.collection("duels").document(duelId)
                             .update("targetWord", tw)
-                            .addOnSuccessListener(unused -> startNewGameWithTarget(finalTargetWord))
+                            .addOnSuccessListener(unused -> {
+                                Log.d(TAG, "fetchOrSetTargetWord: set targetWord as host=" + finalTargetWord);
+                                startNewGameWithTarget(finalTargetWord);
+                            })
                             .addOnFailureListener(e -> {
                                 db.collection("duels").document(duelId)
                                         .set(Collections.singletonMap("targetWord", finalTargetWord), com.google.firebase.firestore.SetOptions.merge())
-                                        .addOnSuccessListener(unused2 -> startNewGameWithTarget(finalTargetWord));
+                                        .addOnSuccessListener(unused2 -> {
+                                            Log.d(TAG, "fetchOrSetTargetWord: set targetWord via merge as host=" + finalTargetWord);
+                                            startNewGameWithTarget(finalTargetWord);
+                                        });
                             });
                 } else {
                     // Not the host, listen for targetWord to be set
@@ -508,11 +500,13 @@ public class GameActivity extends AppCompatActivity {
                                 if (e != null || doc == null || !doc.exists()) return;
                                 String tw2 = doc.getString("targetWord");
                                 if (tw2 != null) {
+                                    Log.d(TAG, "fetchOrSetTargetWord: received targetWord as guest=" + tw2);
                                     startNewGameWithTarget(tw2);
                                 }
                             });
                 }
             } else {
+                Log.d(TAG, "fetchOrSetTargetWord: using existing targetWord=" + tw);
                 startNewGameWithTarget(tw);
             }
             targetWord = tw;
@@ -523,10 +517,9 @@ public class GameActivity extends AppCompatActivity {
     private void startNewGameWithTarget(String tw) {
         targetWord = tw;
         gameState = new WordleGameState(targetWord);
+        Log.d(TAG, "startNewGameWithTarget: targetWord=" + tw + " starting countdown");
         // ...reset UI and state as needed...
         if (isMultiplayer) {
-            // Start the countdown only after the game is ready
-            // Remove forced use of gameStartTime
             startGameCountdown();
         }
     }
@@ -534,6 +527,7 @@ public class GameActivity extends AppCompatActivity {
     // Multiplayer: Setup Firestore listener for duel verdicts and game start
     private void setupDuelListener() {
         if (duelListener != null) duelListener.remove();
+        Log.d(TAG, "setupDuelListener: attaching duel listener for " + duelId);
         duelListener = db.collection("duels").document(duelId)
                 .addSnapshotListener((snapshot, e) -> {
                     if (e != null || snapshot == null || !snapshot.exists()) return;
@@ -543,12 +537,14 @@ public class GameActivity extends AppCompatActivity {
                     Map<String, Object> oppData = (Map<String, Object>) data.get(opponentUid);
                     String myVerdict = myData != null && myData.get("verdict") != null ? myData.get("verdict").toString() : null;
                     String oppVerdict = oppData != null && oppData.get("verdict") != null ? oppData.get("verdict").toString() : null;
+                    Log.d(TAG, "setupDuelListener: snapshot verdicts my=" + myVerdict + " opp=" + oppVerdict);
                     boolean oppGuessed = "win".equals(oppVerdict);
                     // Do NOT cancel timer here; let each user's timer run independently
                     // if ((myVerdict != null || oppVerdict != null) && isMultiplayer && gameCountDownTimer != null) {
                     //     gameCountDownTimer.cancel();
                     // }
                     if (oppGuessed && !hasSubmittedResult) {
+                        Log.d(TAG, "setupDuelListener: opponent won -> submitting lose");
                         endGameWithVerdict("lose");
                     }
                     if (myVerdict != null && oppVerdict != null) {
