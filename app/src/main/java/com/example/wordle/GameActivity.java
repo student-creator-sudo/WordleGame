@@ -34,7 +34,19 @@ import com.google.firebase.firestore.ListenerRegistration;
 import android.os.CountDownTimer;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import java.util.Locale;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 import android.util.Log;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 public class GameActivity extends AppCompatActivity {
 
@@ -50,6 +62,8 @@ public class GameActivity extends AppCompatActivity {
     private List<String> allWordList = new ArrayList<>();
 
     private Toast currentToast;
+
+    private String cachedHint = null; // Store hint for the current game
 
     // Multiplayer mode flag
     private boolean isMultiplayer = false;
@@ -177,8 +191,18 @@ public class GameActivity extends AppCompatActivity {
                 });
             }
 
+            // Add Hint button
+            View hintButton = dialogView.findViewById(R.id.buttonHint);
+            if (hintButton != null) {
+                hintButton.setOnClickListener(view -> {
+                    builder.create().dismiss();
+                    onHintButtonClicked();
+                });
+            }
+
             builder.setNegativeButton("Close", null);
-            builder.show();
+            AlertDialog dialog = builder.create();
+            dialog.show();
         });
 
 
@@ -674,7 +698,7 @@ public class GameActivity extends AppCompatActivity {
             throw new IllegalStateException("Word list is empty!");
         }
         Random random = new Random();
-        String targetWord = wordList.get(random.nextInt(wordList.size()));
+        targetWord = wordList.get(random.nextInt(wordList.size()));
         gameState = new WordleGameState(targetWord);
         // ...reset UI and state as needed...
         startGameCountdown(); // Always reset timer to 5:00 when starting a new game
@@ -946,4 +970,187 @@ public class GameActivity extends AppCompatActivity {
         // No custom logic needed; default behavior is fine
         super.onUserLeaveHint();
     }
+
+    // When hint button is clicked in options dialog:
+    private void onHintButtonClicked() {
+        if (isMultiplayer) {
+            Toast.makeText(this, "Hints not available in multiplayer", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (targetWord == null || targetWord.isEmpty()) {
+            Toast.makeText(this, "Game not initialized. Please try again.", Toast.LENGTH_SHORT).show();
+            Log.e(TAG, "onHintButtonClicked: targetWord is null or empty");
+            return;
+        }
+
+        if (cachedHint != null) {
+            // Already fetched, show cached hint
+            showHintDialog(cachedHint);
+        } else {
+            // Fetch from Gemini API
+            Log.d(TAG, "onHintButtonClicked: fetching hint for word: " + targetWord);
+            fetchHintFromGemini(targetWord);
+        }
+    }
+
+    private void fetchHintFromGemini(String word) {
+        String apiKey = getString(R.string.gemini_api_key);
+
+        // Build the prompt
+        String promptText = "Provide a short hint about the MEANING of the word \"" + word + "\". " +
+                "Do NOT mention letters, spelling, or structure. " +
+                "Keep it to 1-2 short sentences. " +
+                "Examples:\n" +
+                "- You might feel this after achieving something difficult\n" +
+                "- A sudden realization that changes how you see things\n" +
+                "- Used to describe something that brings calm or comfort";
+
+        // Call Gemini API on background thread using REST API with retry logic
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        executor.execute(() -> {
+            // Try gemini-2.5-flash-lite first, then fallback to gemini-1.5-flash
+            String[] models = {"gemini-2.5-flash-lite", "gemini-1.5-flash"};
+            boolean success = false;
+            
+            for (String model : models) {
+                if (success) break;
+                
+                // Retry up to 3 times with exponential backoff
+                for (int attempt = 0; attempt < 3; attempt++) {
+                    try {
+                        String urlString = "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent?key=" + apiKey;
+                        Log.d(TAG, "Attempting hint fetch with model=" + model + ", attempt=" + (attempt + 1));
+                        
+                        URL url = new URL(urlString);
+                        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                        conn.setRequestMethod("POST");
+                        conn.setRequestProperty("Content-Type", "application/json");
+                        conn.setDoOutput(true);
+                        conn.setConnectTimeout(10000);
+                        conn.setReadTimeout(10000);
+
+                        // Build JSON request body
+                        JSONObject requestBody = new JSONObject();
+                        JSONArray contentsArray = new JSONArray();
+                        JSONObject contentObj = new JSONObject();
+                        JSONArray partsArray = new JSONArray();
+                        JSONObject partObj = new JSONObject();
+                        partObj.put("text", promptText);
+                        partsArray.put(partObj);
+                        contentObj.put("parts", partsArray);
+                        contentsArray.put(contentObj);
+                        requestBody.put("contents", contentsArray);
+
+                        // Send request
+                        OutputStream os = conn.getOutputStream();
+                        os.write(requestBody.toString().getBytes("UTF-8"));
+                        os.close();
+
+                        // Read response
+                        int responseCode = conn.getResponseCode();
+                        if (responseCode == HttpURLConnection.HTTP_OK) {
+                            BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                            StringBuilder response = new StringBuilder();
+                            String line;
+                            while ((line = reader.readLine()) != null) {
+                                response.append(line);
+                            }
+                            reader.close();
+
+                            // Parse response JSON
+                            JSONObject responseJson = new JSONObject(response.toString());
+                            String hint = responseJson
+                                    .getJSONArray("candidates")
+                                    .getJSONObject(0)
+                                    .getJSONObject("content")
+                                    .getJSONArray("parts")
+                                    .getJSONObject(0)
+                                    .getString("text")
+                                    .trim();
+
+                            Log.d(TAG, "Successfully fetched hint with model=" + model);
+                            runOnUiThread(() -> {
+                                cachedHint = hint;
+                                showHintDialog(hint);
+                            });
+                            success = true;
+                            conn.disconnect();
+                            break; // Exit retry loop
+                        } else if (responseCode == 503) {
+                            // Model overloaded - read error and retry
+                            String errorBody = "";
+                            try {
+                                BufferedReader errorReader = new BufferedReader(new InputStreamReader(conn.getErrorStream()));
+                                StringBuilder errorResponse = new StringBuilder();
+                                String line;
+                                while ((line = errorReader.readLine()) != null) {
+                                    errorResponse.append(line);
+                                }
+                                errorReader.close();
+                                errorBody = errorResponse.toString();
+                            } catch (Exception e) {
+                                errorBody = "Unable to read error response";
+                            }
+                            
+                            Log.w(TAG, "Model " + model + " overloaded (503), attempt " + (attempt + 1) + "/3: " + errorBody);
+                            conn.disconnect();
+                            
+                            // Wait before retry (exponential backoff: 1s, 2s, 4s)
+                            if (attempt < 2) {
+                                Thread.sleep((long) Math.pow(2, attempt) * 1000);
+                            }
+                        } else {
+                            // Other error - read and log, then try next model
+                            String errorBody = "";
+                            try {
+                                BufferedReader errorReader = new BufferedReader(new InputStreamReader(conn.getErrorStream()));
+                                StringBuilder errorResponse = new StringBuilder();
+                                String line;
+                                while ((line = errorReader.readLine()) != null) {
+                                    errorResponse.append(line);
+                                }
+                                errorReader.close();
+                                errorBody = errorResponse.toString();
+                            } catch (Exception e) {
+                                errorBody = "Unable to read error response";
+                            }
+                            
+                            Log.e(TAG, "Model " + model + " error HTTP " + responseCode + ": " + errorBody);
+                            conn.disconnect();
+                            break; // Try next model
+                        }
+                    } catch (Exception e) {
+                        Log.e(TAG, "Exception with model " + model + ", attempt " + (attempt + 1), e);
+                        if (attempt == 2) break; // Last attempt, try next model
+                        try {
+                            Thread.sleep((long) Math.pow(2, attempt) * 1000);
+                        } catch (InterruptedException ie) {
+                            Thread.currentThread().interrupt();
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            if (!success) {
+                runOnUiThread(() -> {
+                    Toast.makeText(GameActivity.this, "Hint service temporarily unavailable. Please try again.", Toast.LENGTH_LONG).show();
+                    Log.e(TAG, "All hint fetch attempts failed");
+                });
+            }
+        });
+    }
+
+    private void showHintDialog(String hint) {
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle("Hint")
+                .setMessage(hint)
+                .setCancelable(true)
+                .create();
+        dialog.show();
+        // Tapping outside dismisses automatically (default behavior)
+    }
 }
+
+
