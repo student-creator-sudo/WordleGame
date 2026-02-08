@@ -7,7 +7,6 @@ import android.text.Editable;
 import android.text.InputFilter;
 import android.text.TextWatcher;
 import android.util.Log;
-import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -130,12 +129,25 @@ public class MultiplayerActivity extends AppCompatActivity {
             }
         });
         buttonPlayMultiplayer.setOnClickListener(v -> {
-            // Directly update Firestore, since button is only enabled for valid/existing UIDs
+            if (opponentUid == null || opponentUid.trim().length() != UID_LENGTH) {
+                Log.w(TAG, "Play clicked but opponentUid invalid: opponentUid=" + opponentUid);
+                buttonPlayMultiplayer.setEnabled(false);
+                return;
+            }
+
             isReady = !isReady;
+            Log.d(TAG, "toggleReady: isReady=" + isReady + " myUid=" + uid + " opponentUid=" + opponentUid);
+
             java.util.HashMap<String, Object> updateData = new java.util.HashMap<>();
-            updateData.put("opponent_uid", opponentUid);
+            if (isReady) {
+                updateData.put("opponent_uid", opponentUid);
+            } else {
+                // Important: clear opponent_uid on cancel so we don't leave stale mutual matches.
+                updateData.put("opponent_uid", "");
+            }
             updateData.put("ready", isReady);
             db.collection("users").document(uid).set(updateData, SetOptions.merge());
+
             if (isReady) {
                 buttonPlayMultiplayer.setText(getString(R.string.cancel));
                 buttonPlayMultiplayer.setBackgroundColor(ContextCompat.getColor(MultiplayerActivity.this, android.R.color.holo_red_dark));
@@ -202,8 +214,11 @@ public class MultiplayerActivity extends AppCompatActivity {
     }
 
     private void attachFirestoreListeners() {
-        detachFirestoreListeners(); // Remove any existing listeners first
+        detachFirestoreListeners();
         if (myUid == null || opponentUid == null) return;
+
+        Log.d(TAG, "attachFirestoreListeners: myUid=" + myUid + " opponentUid=" + opponentUid + " duelId=" + getDuelId());
+
         DocumentReference myDocRef = db.collection("users").document(myUid);
         DocumentReference opponentDocRef = db.collection("users").document(opponentUid);
         myListenerRegistration = myDocRef.addSnapshotListener((snapshot, e) -> {
@@ -223,13 +238,16 @@ public class MultiplayerActivity extends AppCompatActivity {
         if (duelId != null) {
             DocumentReference duelDocRef = db.collection("duels").document(duelId);
             duelListenerRegistration = duelDocRef.addSnapshotListener((snapshot, e) -> {
-                Log.d(TAG, "Recognized a change in duel document");
-                if (e != null) return;
+                Log.d(TAG, "duelListener: change detected duelId=" + duelId);
+                if (e != null) {
+                    Log.w(TAG, "duelListener: error", e);
+                    return;
+                }
                 if (snapshot != null && snapshot.exists()) {
                     Object countdownStartObj = snapshot.get("3_sec_countdown_start_time");
-                    Long countdownStartTime = (Long)countdownStartObj;
+                    Long countdownStartTime = (countdownStartObj instanceof Long) ? (Long) countdownStartObj : null;
                     if (countdownStartTime == null) {
-                        cancelCountdown(); // Cancel countdown for both players if field is cleared
+                        cancelCountdown();
                         lastCountdownStartTime = null;
                         return;
                     }
@@ -272,6 +290,8 @@ public class MultiplayerActivity extends AppCompatActivity {
             duelListenerRegistration.remove();
             duelListenerRegistration = null;
         }
+
+        Log.d(TAG, "detachFirestoreListeners");
     }
 
     // In MultiplayerActivity.java
@@ -286,64 +306,67 @@ public class MultiplayerActivity extends AppCompatActivity {
             });
             return;
         }
+
         Boolean myReady = mySnap.getBoolean("ready");
         Boolean oppReady = oppSnap.getBoolean("ready");
         String myOppUid = mySnap.getString("opponent_uid");
         String oppOppUid = oppSnap.getString("opponent_uid");
 
-        // --- START of new code to add ---
-        // Safely get the inGame status. Default to 'false' if the field doesn't exist.
-        boolean myInGame = mySnap.getBoolean("inGame") != null && mySnap.getBoolean("inGame");
-        boolean oppInGame = oppSnap.getBoolean("inGame") != null && oppSnap.getBoolean("inGame");
-        // --- END of new code to add ---
+        boolean myInGame = Boolean.TRUE.equals(mySnap.getBoolean("inGame"));
+        boolean oppInGame = Boolean.TRUE.equals(oppSnap.getBoolean("inGame"));
 
-        // Condition 1: Both players are ready and mutually matched.
         boolean bothReadyAndMatched = Boolean.TRUE.equals(myReady) && Boolean.TRUE.equals(oppReady)
+                && myUid != null && opponentUid != null
                 && myUid.equals(oppOppUid) && opponentUid.equals(myOppUid);
 
-        // The final condition now includes checking if NEITHER player is in a game.
-        if (bothReadyAndMatched && !myInGame && !oppInGame) {
+        Log.d(TAG, "checkMatchmakingCondition: bothReadyAndMatched=" + bothReadyAndMatched +
+                " myReady=" + myReady + " oppReady=" + oppReady +
+                " myOpp=" + myOppUid + " oppOpp=" + oppOppUid +
+                " myInGame=" + myInGame + " oppInGame=" + oppInGame +
+                " isMatchmaking=" + isMatchmaking);
+
+        // IMPORTANT: Don't gate matchmaking on inGame flags.
+        // If GameActivity failed to reset inGame for any reason, we'd get stuck forever.
+        if (bothReadyAndMatched) {
             if (!isMatchmaking) {
                 isMatchmaking = true;
-                // Only one user should set the start_time to avoid race conditions
                 String duelId = getDuelId();
-                if (duelId != null) {
-                    DocumentReference duelDocRef = db.collection("duels").document(duelId);
-                    duelDocRef.get().addOnSuccessListener(duelSnap -> {
-                        if (!duelSnap.exists()) {
-                            // This client becomes host and creates the duel document with all required fields
-                            java.util.HashMap<String, Object> duelData = new java.util.HashMap<>();
-                            duelData.put("3_sec_countdown_start_time", null);
-                            duelData.put("player1", myUid);
-                            duelData.put("player2", opponentUid);
-                            duelData.put("targetWord", null); // Target word will be set in GameActivity
-                            duelData.put(myUid, null); // verdict/result for player1
-                            duelData.put(opponentUid, null); // verdict/result for player2
-                            duelDocRef.set(duelData);
-                        }
-                        Object countdownStartObj = duelSnap.get("3_sec_countdown_start_time");
-                        String player1Uid = duelSnap.getString("player1");
-                        Long countdownStartTime = null;
-                        if (countdownStartObj instanceof Long) {
-                            countdownStartTime = (Long) countdownStartObj;
-                        }
-                        // Only host (player1) sets the countdown
-                        if (countdownStartTime == null && myUid.equals(player1Uid)) {
-                            fetchServerTimestamp(serverTime -> {
-                                long syncTime = serverTime + 500; // Add small buffer for sync
-                                java.util.HashMap<String, Object> update = new java.util.HashMap<>();
-                                update.put("3_sec_countdown_start_time", syncTime);
-                                duelDocRef.set(update, SetOptions.merge());
-                            });
-                        }
-                    });
+                if (duelId == null) {
+                    Log.w(TAG, "checkMatchmakingCondition: duelId is null");
+                    return;
                 }
+
+                DocumentReference duelDocRef = db.collection("duels").document(duelId);
+
+                // Deterministic host: both devices will compute the same host.
+                final String hostUid = (myUid.compareTo(opponentUid) <= 0) ? myUid : opponentUid;
+                Log.d(TAG, "checkMatchmakingCondition: entering matchmaking duelId=" + duelId + " hostUid=" + hostUid);
+
+                duelDocRef.get().addOnSuccessListener(duelSnap -> {
+                    if (!duelSnap.exists()) {
+                        Log.d(TAG, "checkMatchmakingCondition: duel doc missing -> creating duelId=" + duelId);
+                        java.util.HashMap<String, Object> duelData = new java.util.HashMap<>();
+                        duelData.put("3_sec_countdown_start_time", null);
+                        duelData.put("player1", hostUid);
+                        duelData.put("player2", hostUid.equals(myUid) ? opponentUid : myUid);
+                        duelData.put("targetWord", null);
+                        duelData.put(myUid, null);
+                        duelData.put(opponentUid, null);
+
+                        duelDocRef.set(duelData, SetOptions.merge()).addOnSuccessListener(unused -> {
+                            // Re-read so we don't use fields from a pre-create snapshot.
+                            duelDocRef.get().addOnSuccessListener(createdSnap -> handleCountdownStartIfHost(duelDocRef, createdSnap, hostUid));
+                        }).addOnFailureListener(err -> Log.e(TAG, "checkMatchmakingCondition: failed creating duel doc", err));
+                    } else {
+                        handleCountdownStartIfHost(duelDocRef, duelSnap, hostUid);
+                    }
+                }).addOnFailureListener(err -> Log.e(TAG, "checkMatchmakingCondition: failed loading duel doc", err));
             }
-            // The duelListener will handle starting the countdown when start_time is set
+            // duelListener handles starting countdown
         } else {
             if (isMatchmaking) {
+                Log.d(TAG, "checkMatchmakingCondition: leaving matchmaking -> cancel countdown + clear start_time");
                 isMatchmaking = false;
-                // Cancel countdown and clear 3_sec_countdown_start_time from duel document
                 cancelCountdown();
                 String duelId = getDuelId();
                 if (duelId != null) {
@@ -355,6 +378,23 @@ public class MultiplayerActivity extends AppCompatActivity {
         }
     }
 
+    private void handleCountdownStartIfHost(DocumentReference duelDocRef, DocumentSnapshot duelSnap, String hostUid) {
+        Object countdownStartObj = (duelSnap != null) ? duelSnap.get("3_sec_countdown_start_time") : null;
+        Long countdownStartTime = (countdownStartObj instanceof Long) ? (Long) countdownStartObj : null;
+
+        Log.d(TAG, "handleCountdownStartIfHost: duelId=" + duelDocRef.getId() + " hostUid=" + hostUid +
+                " myUid=" + myUid + " countdownStartTime=" + countdownStartTime);
+
+        if (countdownStartTime == null && myUid != null && myUid.equals(hostUid)) {
+            fetchServerTimestamp(serverTime -> {
+                long syncTime = serverTime + 500;
+                java.util.HashMap<String, Object> update = new java.util.HashMap<>();
+                update.put("3_sec_countdown_start_time", syncTime);
+                Log.d(TAG, "handleCountdownStartIfHost: setting countdown start_time=" + syncTime);
+                duelDocRef.set(update, SetOptions.merge());
+            });
+        }
+    }
 
     private String getDuelId() {
         // Generate a unique duelId by sorting both UIDs alphabetically and joining with an underscore
@@ -416,10 +456,11 @@ public class MultiplayerActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        // Set ready to false when leaving the activity
+        // Set ready to false when leaving the activity + clear opponent_uid to avoid stale mutual matches.
         if (myUid != null && db != null) {
             java.util.HashMap<String, Object> update = new java.util.HashMap<>();
             update.put("ready", false);
+            update.put("opponent_uid", "");
             db.collection("users").document(myUid).set(update, SetOptions.merge());
         }
         detachFirestoreListeners();
@@ -428,6 +469,12 @@ public class MultiplayerActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+
+        // Defensive: make sure our inGame flag doesn't stay stuck true after returning from a game.
+        if (myUid != null && db != null) {
+            db.collection("users").document(myUid).set(java.util.Collections.singletonMap("inGame", false), SetOptions.merge());
+        }
+
         // Re-attach listeners if a valid opponentUid is present
         String enteredUid = editTextOpponentUid.getText().toString().trim().toUpperCase();
         boolean validFormat = enteredUid.length() == UID_LENGTH && !enteredUid.equals(myUid);
