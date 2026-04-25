@@ -10,7 +10,6 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
-
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
@@ -18,7 +17,6 @@ import androidx.appcompat.widget.SwitchCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
-
 import java.util.Calendar;
 
 
@@ -29,10 +27,6 @@ public class HomeActivity extends AppCompatActivity {
     private Button buttonSinglePlayer;
     private Button buttonMultiplayer;
     private SwitchCompat switchDailyAlarm;
-
-    // No need for GAME_ACTIVITY_CLASS_NAME if we directly reference GameActivity.class
-    // private final String GAME_ACTIVITY_CLASS_NAME = "com.example.wordle.GameActivity";
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,7 +47,6 @@ public class HomeActivity extends AppCompatActivity {
 
         SharedPreferences prefs = getSharedPreferences("wordle_prefs", MODE_PRIVATE);
         boolean alarmEnabled = prefs.getBoolean("daily_alarm_enabled", false);
-        switchDailyAlarm.setChecked(alarmEnabled);
         switchDailyAlarm.setOnCheckedChangeListener((buttonView, isChecked) -> {
             SharedPreferences.Editor editor = prefs.edit();
             editor.putBoolean("daily_alarm_enabled", isChecked);
@@ -66,9 +59,7 @@ public class HomeActivity extends AppCompatActivity {
                 Toast.makeText(this, "Daily reminder disabled", Toast.LENGTH_SHORT).show();
             }
         });
-        if (alarmEnabled) {
-            scheduleDailyAlarm();
-        }
+        switchDailyAlarm.setChecked(alarmEnabled);
 
         buttonSinglePlayer.setOnClickListener(new View.OnClickListener() {
             @Override

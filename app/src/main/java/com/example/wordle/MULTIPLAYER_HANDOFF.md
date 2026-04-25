@@ -129,3 +129,40 @@ NOTE FOR ME: THE checkMatchmakingCondition is flawed. Check the countdown and ho
 MUST: Update both the multiplayer file and game file to use the correct fields and approach as described above.
 
 Last note: I changed the function endGameWithVerdict so that a user can call it with a "forfeit" even if a result was submitted once. 
+
+Start with these files (ordered by priority) and what to verify in each:
+build.gradle (project root) and app/build.gradle
+Verify dependencies, compileSdk/targetSdk, Kotlin/Java versions, signing configs, and lint/test tasks.
+AndroidManifest.xml
+Check activities, exported flags, permissions (INTERNET), and activity launch modes.
+
+app/src/main/java/com/example/wordle/GameActivity.java
+Core logic: lifecycle, Firestore usage, threading, API key access, word-list loading, null guards, listener removal.
+app/src/main/java/com/example/wordle/WordleGameState.java
+Game state mutations, defensive copies, null safety, serialization if saved across configuration.
+app/src/main/java/com/example/wordle/BarChartView.java (or custom views)
+Ensure safe canvas operations, measured/layout code, null checks.
+app/src/main/java/com/example/wordle/HomeActivity.java and app/src/main/java/com/example/wordle/StatisticsActivity.java
+Navigation, Intent extras, SharedPreferences use, UI updates.
+res/layout/activity_game.xml
+IDs referenced in GameActivity (e.g., game_activity_main_layout, key_a..key_z, cell_*_*, buttonOptions, textViewCountdown) must exist and types match.
+res/layout/dialog_options.xml
+IDs for switchHardMode, IncludeALlWordsSwitch (or corrected id), buttonRestart, buttonHint, and buttonHome.
+res/layout/bar_chart_stats_dialog.xml
+Contains barChartViewDialog and matches BarChartView expectations.
+res/values/strings.xml and res/values/styles.xml
+Check gemini_api_key presence (should be placeholder), no hardcoded secrets, consistent strings.
+assets/Wordle.txt and assets/WordleStandard.txt
+Confirm format (one word per line), encoding, no trailing garbage; ensure loadWordLists() parsing matches file format.
+google-services.json and Firebase-related config files
+Ensure not leaking sensitive keys in repo and Firestore rules are appropriate.
+app/src/test and app/src/androidTest (if present)
+Run tests; review failing tests and missing coverage for critical logic.
+gradle.properties, .gitignore, and proguard-rules.pro
+Verify sensitive props are not committed, appropriate ignore rules, and release obfuscation settings.
+Any network/helper classes (HTTP utilities, Executors) under app/src/main/java/.../network
+Check timeouts, stream closing, retries, error handling, and avoid logging secrets.
+Use this order: build → manifest → GameActivity → WordleGameState → layouts → assets → Firebase → tests → static/config files.
+
+Finished verifying DailAlarmReceiver, HomeActivity, build.gradle
+Also changed the app icon
