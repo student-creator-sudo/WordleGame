@@ -11,6 +11,7 @@
     <string name="opponent_uid_length_error">Opponent UID must be 6 characters.</string>
     <string name="opponent_uid_not_found_error">Opponent UID not found.</string>
 
-    <string name="gemini_api_key">AIzaSyAaj0sffvtd0jWIIfjVMNGJRcXPIz2U4aU</string>
+    <!-- The real key is now pulled from local.properties via build.gradle -->
+    <string name="gemini_api_key" translatable="false">PLACEHOLDER_KEY</string>
 
 </resources>

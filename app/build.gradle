@@ -7,6 +7,12 @@ android {
     namespace 'com.example.wordle'
     compileSdk 35
 
+    // Read local.properties to get the API key safely
+    Properties properties = new Properties()
+    if (project.rootProject.file('local.properties').exists()) {
+        properties.load(project.rootProject.file('local.properties').newDataInputStream())
+    }
+
     defaultConfig {
         applicationId "com.example.wordle"
         minSdk 24
@@ -15,6 +21,9 @@ android {
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        // This creates a string resource named "gemini_api_key" using the value from local.properties
+        resValue "string", "gemini_api_key", properties.getProperty('GEMINI_API_KEY', 'YOUR_KEY_HERE')
     }
 
     buildTypes {
