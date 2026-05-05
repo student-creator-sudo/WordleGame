@@ -216,26 +216,6 @@ public class GameActivity extends AppCompatActivity {
 
 
 
-
-
-        try (InputStream is = getAssets().open("Wordle.txt")) {
-            StringBuilder sbAllowed = new StringBuilder();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-            String line;
-            while ((line = reader.readLine()) != null) {
-                sbAllowed.append(line.trim().toLowerCase());
-            }
-            String allAllowedWords = sbAllowed.toString();
-            for (int i = 0; i + 5 <= allAllowedWords.length(); i += 5) {
-                allowedWords.add(allAllowedWords.substring(i, i + 5));
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-
-
-
         findViewById(R.id.key_a).setOnClickListener(v -> addLetter('A'));
         findViewById(R.id.key_b).setOnClickListener(v -> addLetter('B'));
         findViewById(R.id.key_c).setOnClickListener(v -> addLetter('C'));
@@ -685,7 +665,9 @@ public class GameActivity extends AppCompatActivity {
             }
             String allWords = sb.toString();
             for (int i = 0; i + 5 <= allWords.length(); i += 5) {
-                allWordList.add(allWords.substring(i, i + 5));
+                String word = allWords.substring(i, i + 5);
+                allWordList.add(word);   // Used for picking a random word
+                allowedWords.add(word);  // Used for checking if a guess is valid
             }
         } catch (IOException e) {
             e.printStackTrace();
