@@ -9,27 +9,26 @@
     android:padding="16dp"
     tools:context=".HomeActivity">
 
-    <com.example.wordle.OutlinedTextView
-    android:id="@+id/textViewTitle"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:text="Wordle!"
-    android:textSize="45sp"
-    android:textStyle="bold|italic"
-    android:textColor="@android:color/white"
-    android:shadowColor="#80000000"
-    android:shadowDx="5"
-    android:shadowDy="5"
-    android:shadowRadius="5"
+    <TextView
+        android:id="@+id/textViewTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Wordle!"
+        android:textSize="45sp"
+        android:textStyle="bold|italic"
+        android:textColor="@android:color/white"
 
-    app:outlineColor="@color/black"
-    app:outlineWidth="3dp"
 
-    app:layout_constraintTop_toTopOf="parent"
-    app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintEnd_toEndOf="parent"
-    app:layout_constraintBottom_toTopOf="@+id/guideline"
-    app:layout_constraintVertical_bias="0.3" />
+        android:shadowColor="@android:color/black"
+        android:shadowDx="5"
+        android:shadowDy="5"
+        android:shadowRadius="8"
+
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/guideline"
+        app:layout_constraintVertical_bias="0.3" />
 
 <androidx.constraintlayout.widget.Guideline
     android:id="@+id/guideline"
