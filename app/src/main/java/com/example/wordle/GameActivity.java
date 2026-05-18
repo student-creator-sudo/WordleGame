@@ -1,4 +1,3 @@
-// In GameActivity.java
 package com.example.wordle;
 
 import android.os.Bundle;
