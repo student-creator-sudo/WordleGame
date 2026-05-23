@@ -33,7 +33,7 @@ public class BarChartView extends View {
         super.onDraw(canvas);
         int width = getWidth();
         int height = getHeight();
-        int numBars = 7; // Changed from 6 to 7
+        int numBars = 7;
         int margin = 24;
         int availableWidth = width - 2 * margin;
         int barSpacing = 16;
@@ -41,17 +41,33 @@ public class BarChartView extends View {
         int baseY = height - 60;
         int chartHeight = height - 120;
         for (int i = 0; i < numBars; i++) {
-            int barHeight = max > 0 ? (int) (chartHeight * (values[i] / (float) max)) : 0;
+            int dataValue;
+            String label;
+
+            if (i == 0) {
+                // Bar 0 is the "Fail" bar.
+                dataValue = values[6];
+                label = "F";
+            } else {
+                // Bars 1-6 are for Attempts 1-6.
+                // Subtract 1 from 'i' to get the correct data from the array.
+                dataValue = values[i - 1];
+                label = String.valueOf(i);
+            }
+
+            int barHeight = max > 0 ? (int) (chartHeight * (dataValue / (float) max)) : 0;
             int left = margin + i * (barWidth + barSpacing);
             int top = baseY - barHeight;
             int right = left + barWidth;
             int bottom = baseY;
+
             canvas.drawRect(left, top, right, bottom, barPaint);
-            // Draw attempt number (1-6) below each bar, first bar is 'F' for fails
-            String label = (i == 0) ? "F" : String.valueOf(i);
+
+            // Draw the label (F, 1, 2, 3, 4, 5, 6)
             canvas.drawText(label, left + barWidth / 2f, baseY + 40, textPaint);
-            // Draw value above each bar
-            canvas.drawText(String.valueOf(values[i]), left + barWidth / 2f, top - 10, textPaint);
+
+            // Draw the actual number value above the bar
+            canvas.drawText(String.valueOf(dataValue), left + barWidth / 2f, top - 10, textPaint);
         }
     }
 }
