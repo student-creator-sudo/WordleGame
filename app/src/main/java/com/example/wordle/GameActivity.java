@@ -1,46 +1,33 @@
 package com.example.wordle;
 
 import android.os.Bundle;
-
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
-
 import android.widget.ImageButton;
 import android.app.AlertDialog;
 import android.view.LayoutInflater;
 import android.view.View;
 import androidx.appcompat.widget.SwitchCompat;
 import android.content.Intent;
-
-import android.content.res.AssetManager;
 import java.io.*;
 import java.util.*;
-
 import android.widget.TextView;
-
 import android.graphics.Typeface;
-
 import android.widget.Toast;
 import android.view.MotionEvent;
 import android.content.SharedPreferences;
-
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
-
 import android.os.CountDownTimer;
-import androidx.constraintlayout.widget.ConstraintLayout;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
 import android.util.Log;
-
 import org.json.JSONArray;
 import org.json.JSONObject;
-
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
