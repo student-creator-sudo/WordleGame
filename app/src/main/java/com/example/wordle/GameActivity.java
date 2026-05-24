@@ -77,7 +77,6 @@ public class GameActivity extends AppCompatActivity {
     private String opponentUid;
     private ListenerRegistration duelListener;
     private boolean hasSubmittedResult = false;
-    private String myFinalVerdict = null;
     private String targetWord = null;
 
     private AlertDialog waitingDialog;
@@ -379,7 +378,6 @@ public class GameActivity extends AppCompatActivity {
         Log.d(TAG, "endGameWithVerdict: verdict=" + verdict + " hasSubmittedResult=" + hasSubmittedResult);
         if ("forfeit".equals(verdict)) {
             hasSubmittedResult = true;
-            myFinalVerdict = verdict;
             if (gameCountDownTimer != null) {
                 gameCountDownTimer.cancel();
             }
@@ -398,7 +396,6 @@ public class GameActivity extends AppCompatActivity {
             return;
         }
         hasSubmittedResult = true;
-        myFinalVerdict = verdict;
         if (gameCountDownTimer != null) {
             gameCountDownTimer.cancel();
         }
