@@ -23,17 +23,4 @@ public class WordleGameState {
             guesses.add(guess);
         }
     }
-
-    public boolean isGameOver() {
-        return guesses.size() >= MAX_GUESSES || isWin();
-    }
-
-    public boolean isWin() {
-        return !guesses.isEmpty() && guesses.get(guesses.size() - 1).equalsIgnoreCase(targetWord);
-    }
-
-    public void reset(String newTargetWord) {
-        this.targetWord = newTargetWord;
-        this.guesses.clear();
-    }
 }
